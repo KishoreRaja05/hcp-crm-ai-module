@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.config import CORS_ORIGINS
@@ -8,7 +9,12 @@ from app.models import Interaction
 from app.schemas import ChatRequest, ChatResponse, InteractionSaveRequest
 from app.agent import run_agent
 
-Base.metadata.create_all(bind=engine)
+try:
+    Base.metadata.create_all(bind=engine)
+except SQLAlchemyError:
+    # Allow the API to boot even if the configured database is unavailable.
+    # Routes that need persistence will fail gracefully when the DB is unreachable.
+    pass
 
 app = FastAPI(title="AI-First CRM - HCP Module")
 

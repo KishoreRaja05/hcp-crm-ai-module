@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from typing import Optional, List
 
 from langchain_core.tools import tool
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models import Interaction
@@ -48,6 +49,12 @@ def log_interaction(
         }.items()
         if v not in (None, "")
     }
+    if "sentiment" in updates:
+        normalized = updates["sentiment"].strip().capitalize()
+        if normalized in {"Positive", "Neutral", "Negative"}:
+            updates["sentiment"] = normalized
+        else:
+            updates.pop("sentiment")
     return json.dumps({"form_updates": updates, "note": "Logged interaction fields."})
 
 
@@ -71,6 +78,17 @@ def edit_interaction(field: str, value: str) -> str:
     }
     if field not in valid_fields:
         return json.dumps({"form_updates": {}, "note": f"Unknown field: {field}"})
+
+    if field == "sentiment":
+        value = value.strip().capitalize()
+        if value not in {"Positive", "Neutral", "Negative"}:
+            return json.dumps(
+                {
+                    "form_updates": {},
+                    "note": f"Invalid sentiment value: {value}. Must be Positive, Neutral, or Negative.",
+                }
+            )
+
     return json.dumps(
         {"form_updates": {field: value}, "note": f"Updated {field} to '{value}'."}
     )
@@ -125,13 +143,21 @@ def make_summarize_hcp_history_tool(db: Session):
         """Look up past logged interactions with this HCP in the database and
         summarize sentiment trend and key history, to give the rep context before
         logging today's visit."""
-        past: List[Interaction] = (
-            db.query(Interaction)
-            .filter(Interaction.hcp_name.ilike(f"%{hcp_name}%"))
-            .order_by(Interaction.created_at.desc())
-            .limit(5)
-            .all()
-        )
+        try:
+            past: List[Interaction] = (
+                db.query(Interaction)
+                .filter(Interaction.hcp_name.ilike(f"%{hcp_name}%"))
+                .order_by(Interaction.created_at.desc())
+                .limit(5)
+                .all()
+            )
+        except SQLAlchemyError:
+            note = (
+                f"Unable to query prior interactions for {hcp_name} right now, "
+                "but I can still log this visit."
+            )
+            return json.dumps({"form_updates": {}, "note": note})
+
         if not past:
             note = f"No prior logged interactions found for {hcp_name}."
         else:

@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Interaction
 
+from datetime import datetime
 
 @tool
 def log_interaction(
@@ -33,7 +34,15 @@ def log_interaction(
     """Extract structured interaction data from the rep's natural language description
     and populate the Log HCP Interaction form. Use this the FIRST time an interaction
     is described. date should be DD-MM-YYYY, time should be HH:MM (24hr). sentiment
-    must be one of Positive, Neutral, Negative if mentioned or implied."""
+    must be one of Positive, Neutral, Negative if mentioned or implied. If the rep does
+    not mention a date/time, assume the interaction is being logged today, right now."""
+
+    now = datetime.now()
+    if not date:
+        date = now.strftime("%d-%m-%Y")
+    if not time:
+        time = now.strftime("%H:%M")
+        
     updates = {
         k: v
         for k, v in {

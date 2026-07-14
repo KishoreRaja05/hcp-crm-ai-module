@@ -43,11 +43,11 @@ Field reps spend a large share of their day on manual CRM data entry after a vis
 | Frontend | React + Redux (state management), Vite |
 | Backend | Python, FastAPI |
 | AI Agent Framework | LangGraph |
-| LLM | Groq API — `llama-3.1-8b-instant` (see note below) |
+| LLM | Groq API — `llama-3.3-70b-versatile` (see note below) |
 | Database | PostgreSQL (hosted on Supabase) |
 | Font | Google Inter |
 
-> **⚠️ Note on the LLM model:** The task specification calls for Groq's `gemma2-9b-it`. As of this submission, Groq has **officially deprecated `gemma2-9b-it`**, recommending `llama-3.1-8b-instant` as the direct replacement, describing it as delivering comparable price-performance at the same speed. This project uses `llama-3.1-8b-instant` accordingly. The model is fully configurable via the `GROQ_MODEL` environment variable, so it can be swapped back if `gemma2-9b-it` becomes available again.
+> **⚠️ Note on the LLM model:** The task specification calls for Groq's `gemma2-9b-it`. As of this submission, Groq has **officially deprecated `gemma2-9b-it`**, recommending `llama-3.3-70b-versatile` as the direct replacement, describing it as delivering comparable price-performance at the same speed. This project uses `llama-3.3-70b-versatile` accordingly. The model is fully configurable via the `GROQ_MODEL` environment variable, so it can be swapped back if `gemma2-9b-it` becomes available again.
 
 ---
 
@@ -138,7 +138,7 @@ Create a `.env` file inside `backend/`:
 
 ```dotenv
 GROQ_API_KEY=your_groq_api_key_here
-GROQ_MODEL=llama-3.1-8b-instant
+GROQ_MODEL=llama-3.3-70b-versatile
 DATABASE_URL=postgresql+psycopg://user:password@host:5432/dbname
 CORS_ORIGINS=http://localhost:5173
 ```
@@ -179,7 +179,7 @@ npm run dev
 
 - `date`/`time` are stored as plain strings rather than native `Date`/`Time` types, since the LLM naturally outputs them as text (`DD-MM-YYYY`, `HH:MM`).
 - The form fields are read-only by design — all data entry happens through the AI chat panel, with a "Save Interaction" action to persist the current state.
-- `gemma2-9b-it` was substituted with `llama-3.1-8b-instant` per Groq's own deprecation guidance (see note above).
+- `gemma2-9b-it` was substituted with `llama-3.3-70b-versatile` per Groq's own deprecation guidance (see note above).
 
 ---
 
